@@ -10,7 +10,8 @@
     "start": "node dist/server.js",
     "migrate:up": "node-pg-migrate --envPath .env up",
     "migrate:down": "node-pg-migrate --envPath .env down",
-    "test:guest": "tsx scripts/test-guest.ts"
+    "test:guest": "tsx scripts/test-guest.ts",
+    "test:rooms": "tsx scripts/test-rooms.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
