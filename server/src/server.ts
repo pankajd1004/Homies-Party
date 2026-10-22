@@ -5,6 +5,7 @@ import Fastify from 'fastify';
 import { pool } from './db';
 import { authenticate } from './auth';
 import { roomRoutes } from './rooms';
+import { setupSocketIO } from './socket';
 
 const server = Fastify({
   logger: {
@@ -198,6 +199,8 @@ server.patch('/v1/me', { preHandler: authenticate }, async (request, reply) => {
 });
 
 server.register(roomRoutes);
+
+export const io = setupSocketIO(server.server);
 
 const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '0.0.0.0';

@@ -213,4 +213,57 @@
      PASS: Last player left room; room was deleted because it became empty
      ```
 
+## Step 6 - Socket.IO real-time updates
+- **What was done:**
+  - Installed `socket.io` and `socket.io-client` (dev dependency).
+  - Attached Socket.IO to the existing Fastify server (`server.server`) in `server/src/server.ts` so REST APIs and WebSockets share the same port.
+  - Implemented connection authentication middleware in `server/src/socket.ts` that verifies Firebase ID tokens passed in `socket.handshake.auth.token` and checks that the user exists in PostgreSQL (`users` table). Rejects missing or invalid tokens and unregistered users without logging tokens.
+  - Added Socket.IO room subscription handlers:
+    - `"room:subscribe"`: Validates that the requesting socket's user is a member of the room; joins the socket to the room channel and returns the room's current state in the acknowledgement. Non-members or non-existent rooms are rejected.
+    - `"room:unsubscribe"`: Removes the socket from the room channel.
+    - Handled socket disconnect cleanup without dropping players from database rooms.
+  - Integrated real-time broadcasts in `server/src/rooms.ts`:
+    - Emits `"room:updated"` with the full room state to room members whenever a player joins, changes ready status, or leaves (including host migration).
+    - Emits `"room:started"` when the host starts the game.
+  - Added automated test suite `server/scripts/test-realtime.ts` and configured npm script `"test:realtime": "tsx scripts/test-realtime.ts"`.
+- **What changed in the project:**
+  - The server now supports bidirectional real-time communication alongside existing REST endpoints on the same port.
+  - Clients subscribed to a room receive instant updates when participants join, change ready state, leave, or when the host starts the match.
+  - Unauthorized or unauthenticated socket connections and subscriptions are strictly rejected.
+- **How to test:**
+  1. Navigate to `server/`:
+     ```bash
+     cd server
+     ```
+  2. Run TypeScript compiler check:
+     ```bash
+     npm run typecheck
+     ```
+  3. Start the dev server (if not already running):
+     ```bash
+     npm run dev
+     ```
+  4. Run the automated real-time test suite:
+     ```bash
+     npm run test:realtime
+     ```
+     Real output:
+     ```
+     PASS: Authenticated user can connect to Socket.IO
+     PASS: Connection without a token was rejected
+     PASS: Connection with invalid token was rejected
+     PASS: Connection for user without DB profile was rejected
+     PASS: Room member subscribed and received current room state
+     PASS: Non-member subscription was rejected (403 Forbidden)
+     PASS: Subscribed User A received "room:updated" when User B joined via REST
+     PASS: Subscribed User A received "room:updated" when User B marked ready
+     PASS: Subscribed members (User A and User B) received "room:started" event
+     ```
+  5. Run the full backend test suite to ensure zero regressions:
+     ```bash
+     npm run test:guest
+     npm run test:rooms
+     ```
+
+
 

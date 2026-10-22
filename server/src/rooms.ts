@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Pool, PoolClient } from 'pg';
 import { pool } from './db';
 import { authenticate } from './auth';
+import { broadcastRoomUpdated, broadcastRoomStarted } from './socket';
 
 // 32-character set: A-Z and 2-9, excluding O, I, 0, 1
 const ROOM_CODE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -317,6 +318,9 @@ export async function roomRoutes(server: FastifyInstance): Promise<void> {
         await client.query('COMMIT');
 
         const roomDetails = await getRoomDetailsById(room.id);
+        if (roomDetails) {
+          broadcastRoomUpdated(roomDetails.code, roomDetails);
+        }
         return reply.status(200).send(roomDetails);
       } catch (err: any) {
         await client.query('ROLLBACK');
@@ -454,6 +458,9 @@ export async function roomRoutes(server: FastifyInstance): Promise<void> {
       );
 
       const roomDetails = await getRoomDetailsById(room.id);
+      if (roomDetails) {
+        broadcastRoomUpdated(roomDetails.code, roomDetails);
+      }
       return reply.status(200).send(roomDetails);
     } catch (error: any) {
       server.log.error(error);
@@ -549,6 +556,9 @@ export async function roomRoutes(server: FastifyInstance): Promise<void> {
         await client.query('COMMIT');
 
         const updatedRoom = await getRoomDetailsById(room.id);
+        if (updatedRoom) {
+          broadcastRoomUpdated(updatedRoom.code, updatedRoom);
+        }
         return reply.status(200).send({
           message: 'Left room successfully.',
           roomDeleted: false,
@@ -669,6 +679,9 @@ export async function roomRoutes(server: FastifyInstance): Promise<void> {
         await client.query('COMMIT');
 
         const updatedRoom = await getRoomDetailsById(room.id);
+        if (updatedRoom) {
+          broadcastRoomStarted(updatedRoom.code, updatedRoom);
+        }
         return reply.status(200).send(updatedRoom);
       } catch (err: any) {
         await client.query('ROLLBACK');
