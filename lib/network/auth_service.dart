@@ -46,9 +46,15 @@ class AuthService {
   String? _cachedIdToken;
   DateTime? _tokenExpiry;
   UserProfile? _currentProfile;
+  String? _initError;
 
   UserProfile? get currentProfile => _currentProfile;
   bool get isSignedIn => _cachedIdToken != null;
+  String? get initError => _initError;
+
+  void setInitError(String error) {
+    _initError = error;
+  }
 
   void setProfile(UserProfile profile) {
     _currentProfile = profile;
@@ -64,9 +70,9 @@ class AuthService {
       return _cachedIdToken!;
     }
 
-    // 1. Try native Firebase Auth if Firebase is initialized
-    try {
-      if (Firebase.apps.isNotEmpty) {
+    // 1. Native FirebaseAuth anonymous sign-in as the main path (when Firebase is initialized)
+    if (Firebase.apps.isNotEmpty) {
+      try {
         final auth = FirebaseAuth.instance;
         User? user = auth.currentUser;
         if (user == null) {
@@ -82,12 +88,14 @@ class AuthService {
             return token;
           }
         }
+        throw const AuthException('Firebase Auth did not return an ID token.');
+      } catch (e) {
+        if (e is AuthException) rethrow;
+        throw AuthException('Native Firebase Auth failed: $e', e);
       }
-    } catch (_) {
-      // Fall through to REST API fallback if native Firebase is not initialized or unsupported
     }
 
-    // 2. Try REST fallback if Web API key is available
+    // 2. REST fallback ONLY if Firebase is not initialized
     final apiKey = webApiKey;
     if (apiKey.isNotEmpty) {
       final token = await _signUpAnonymousRest(apiKey);
@@ -100,9 +108,14 @@ class AuthService {
       return _cachedIdToken!;
     }
 
+    if (_initError != null && _initError!.isNotEmpty) {
+      throw AuthException(
+        'Firebase initialization error: $_initError',
+      );
+    }
+
     throw const AuthException(
-      'Unable to obtain Firebase token. Please initialize Firebase or supply '
-      '--dart-define=FIREBASE_WEB_API_KEY=your_key.',
+      'Firebase is not initialized. Please configure Firebase to access the online lobby.',
     );
   }
 

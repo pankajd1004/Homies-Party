@@ -35,16 +35,18 @@ class ApiConfig {
   /// Detects the appropriate default backend URL based on current operating platform.
   static String get defaultBaseUrl {
     if (kIsWeb) {
-      return 'http://127.0.0.1:3000';
+      return 'http://localhost:3000';
     }
 
     try {
-      if (Platform.isAndroid) {
-        // 10.0.2.2 routes directly to host 127.0.0.1 in standard Android emulator
-        return 'http://10.0.2.2:3000';
-      }
-      if (Platform.isIOS || Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-        return 'http://127.0.0.1:3000';
+      if (!kIsWeb) {
+        if (Platform.isAndroid) {
+          // 10.0.2.2 routes directly to host 127.0.0.1 in standard Android emulator
+          return 'http://10.0.2.2:3000';
+        }
+        if (Platform.isIOS || Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+          return 'http://127.0.0.1:3000';
+        }
       }
     } catch (_) {
       // Fallback for edge cases

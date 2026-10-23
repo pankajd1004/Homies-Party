@@ -133,5 +133,23 @@ void main() {
       final auth2 = AuthService();
       expect(identical(auth1, auth2), isTrue);
     });
+
+    test('AuthService tracks initialization error and throws AuthException', () async {
+      final auth = AuthService();
+      auth.signOut();
+      auth.setInitError('Test Firebase initialization failure');
+      expect(auth.initError, 'Test Firebase initialization failure');
+
+      expect(
+        () => auth.getIdToken(),
+        throwsA(
+          isA<AuthException>().having(
+            (e) => e.message,
+            'message',
+            contains('Test Firebase initialization failure'),
+          ),
+        ),
+      );
+    });
   });
 }
