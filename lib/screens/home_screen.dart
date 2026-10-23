@@ -8,6 +8,7 @@ import '../ui/app_palette.dart';
 import '../ui/app_text_styles.dart';
 import '../ui/app_transitions.dart';
 import 'ludo_mode_select_screen.dart';
+import 'online_lobby_screen.dart';
 
 /// Redesigned Home Screen presenting all five classic tabletop board games:
 /// Ludo, Snakes & Ladders, Carrom, Battleship, and Pen Fight.
@@ -19,6 +20,19 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('home_online_lobby_fab'),
+        backgroundColor: AppPalette.ludo,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.public, size: 20),
+        label: const Text(
+          'Online Lobby',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        onPressed: () => Navigator.of(context).push(
+          appPageRoute(const OnlineLobbyScreen()),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: AppPalette.backgroundGradient,

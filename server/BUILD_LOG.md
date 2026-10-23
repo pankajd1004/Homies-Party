@@ -265,5 +265,47 @@
      npm run test:rooms
      ```
 
+## Step 7A - Flutter foundation for online multiplayer
+- **What was done:**
+  - Added required Flutter dependencies in `pubspec.yaml`: `http`, `socket_io_client`, `firebase_core`, and `firebase_auth`.
+  - Built clean networking layer under `lib/network/`:
+    - `api_config.dart`: Centralized backend base URL configuration with platform-specific defaults (Android Emulator `10.0.2.2`, Windows/iOS `127.0.0.1`), compile-time `--dart-define=BACKEND_URL=...` override, and runtime configuration settings.
+    - `auth_service.dart`: Firebase guest authentication service. Obtains Firebase ID tokens via native Firebase Auth or REST API fallback, attaches credentials as `Bearer <token>`, and syncs with backend profile (`POST /v1/auth/guest`).
+    - `api_client.dart`: Typed HTTP client implementing complete room operations (`createRoom`, `joinRoom`, `getRoom`, `setReady`, `leaveRoom`, `startRoom`) and user profile operations (`authenticateGuest`, `getProfile`, `updateProfile`).
+    - `socket_service.dart`: Real-time Socket.IO client managing handshake authentication, room subscriptions (`room:subscribe`, `room:unsubscribe`), and streams for `room:updated` and `room:started`.
+    - `models/`: Strongly typed models for `UserProfile`, `Room`, `RoomPlayer`, and `LeaveRoomResult`.
+    - `network.dart`: Unified barrel export file.
+  - Implemented standalone `OnlineLobbyScreen` (`lib/screens/online_lobby_screen.dart`) providing room creation, joining by code, ready status toggling, host-only game start, and live Socket.IO room sync.
+  - Added minimal, non-disruptive entry point to `HomeScreen` via FloatingActionButton without modifying existing game layouts, assets, or controls.
+  - Added unit test suite in `test/network_test.dart` and comprehensive setup/testing documentation in `lib/network/README.md`.
+- **What changed in the project:**
+  - Flutter app is now equipped with client-side networking and real-time infrastructure to communicate with the Homies Party backend.
+  - Players can access an online multiplayer lobby interface, manage private room codes, and see live participant updates over Socket.IO.
+  - All 5 existing local tabletop games (Ludo, Snakes & Ladders, Carrom, Battleship, Pen Fight) remain fully preserved with all tests passing.
+- **How to test:**
+  1. Run Flutter static analysis:
+     ```bash
+     flutter analyze
+     ```
+  2. Run Flutter test suite:
+     ```bash
+     flutter test test/network_test.dart test/home_screen_test.dart
+     ```
+  3. Run backend typecheck and tests:
+     ```bash
+     cd server
+     npm run typecheck
+     ```
 
 
+
+
+
+## Step 7a - Verification
+- **What was verified:**
+  - Ran git diff --stat and confirmed zero modifications to existing game code (lib/logic/, lib/snl/, lib/carrom/, lib/battleship/, lib/pen_fight/, lib/models/, lib/widgets/, lib/ui/, lib/theme/). Only lib/screens/home_screen.dart was modified to add a FloatingActionButton leading to the online lobby.
+  - Executed flutter pub get: Dependencies resolved successfully.
+  - Executed flutter analyze: Passed with 0 errors or warnings.
+  - Executed full flutter test suite: All 253 tests passed (0 failed).
+  - Inspected lib/network/ and lib/screens/online_lobby_screen.dart to verify module responsibilities, server URL resolution, and confirmed no hardcoded keys, tokens, or credentials exist in the source code.
+  - Audited Firebase setup and .gitignore coverage.
